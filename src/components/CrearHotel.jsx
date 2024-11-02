@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function CrearHotel({ onCrearHotel }) {
+const CrearHotel = ({ onCrearHotel }) => {
   const [nombreHotel, setNombreHotel] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const manejarCrearHotel = () => {
-    if (!nombreHotel) {
+  const handleCrearHotel = () => {
+    if (!nombreHotel.trim()) {
       setError('Debe ingresar el nombre del hotel.');
       return;
     }
     setError('');
-    onCrearHotel(nombreHotel);
+    onCrearHotel(nombreHotel.trim());
+    navigate('/home');
   };
 
   return (
@@ -18,14 +21,14 @@ function CrearHotel({ onCrearHotel }) {
       <h2>Crear Hotel</h2>
       <input
         type="text"
-        placeholder="Nombre del Hotel"
+        placeholder="Nombre del hotel"
         value={nombreHotel}
         onChange={(e) => setNombreHotel(e.target.value)}
       />
       {error && <div className="error-message">{error}</div>}
-      <button onClick={manejarCrearHotel}>Crear</button>
+      <button onClick={handleCrearHotel}>Crear Hotel</button>
     </div>
   );
-}
+};
 
 export default CrearHotel;

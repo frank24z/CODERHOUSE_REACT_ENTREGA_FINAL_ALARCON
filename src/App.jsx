@@ -17,15 +17,8 @@ function App() {
     if (nombreHotel) sessionStorage.setItem("nombreHotel", nombreHotel);
   }, [usuario, nombreHotel]);
 
-  const manejarLogin = (nombre) => {
-    setUsuario(nombre);
-    sessionStorage.setItem("usuario", nombre);
-  };
-
-  const manejarCrearHotel = (hotel) => {
-    setNombreHotel(hotel);
-    sessionStorage.setItem("nombreHotel", hotel);
-  };
+  const manejarLogin = (nombre) => setUsuario(nombre);
+  const manejarCrearHotel = (hotel) => setNombreHotel(hotel);
 
   const handleLogout = () => {
     setUsuario("");

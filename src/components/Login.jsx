@@ -13,14 +13,13 @@ function Login({ onLogin, usuarioGuardado }) {
   }, [usuarioGuardado]);
 
   const manejarLogin = () => {
-    if (!nombre) {
+    if (!nombre.trim()) {
       setError('Debe ingresar su nombre.');
       return;
     }
     setError('');
-    sessionStorage.setItem('usuario', nombre);
-    onLogin(nombre); 
-    navigate('/home');
+    onLogin(nombre.trim());
+    navigate('/crear-hotel'); 
   };
 
   return (
@@ -31,10 +30,9 @@ function Login({ onLogin, usuarioGuardado }) {
         placeholder="Ingrese su nombre"
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
-        disabled={!!usuarioGuardado}
       />
       {error && <div className="error-message">{error}</div>}
-      <button onClick={manejarLogin}>Ingresar</button> 
+      <button onClick={manejarLogin}>Ingresar</button>
     </div>
   );
 }
