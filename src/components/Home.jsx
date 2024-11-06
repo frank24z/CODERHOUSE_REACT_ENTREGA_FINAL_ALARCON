@@ -64,7 +64,9 @@ const HabitacionCard = ({ habitacion, index, onDropHuesped, setHabitaciones }) =
 
   return (
     <div ref={drop} className="habitacion-card" style={{ borderColor: isOver ? "green" : "transparent" }}>
-      <img src={obtenerImagenEstado(habitacion.estado)} alt={`Estado ${habitacion.estado}`} className="estado-imagen" />
+      <div className="estado-imagen-container">
+        <img src={obtenerImagenEstado(habitacion.estado)} alt={`Estado ${habitacion.estado}`} className="estado-imagen" />
+      </div>
       <div className="info-habitacion">
         <p>Número: {habitacion.numeroID}</p>
         <p>Tipo: {habitacion.tipo}</p>
@@ -93,6 +95,7 @@ const HabitacionCard = ({ habitacion, index, onDropHuesped, setHabitaciones }) =
       </div>
     </div>
   );
+  
 };
 
 function Home({ usuario, nombreHotel, onLogout, vista = "todo", setVista }) {
