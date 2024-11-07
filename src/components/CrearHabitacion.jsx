@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { crearHabitacion, obtenerHabitaciones } from '../services/habitacionService';
 
-const CrearHabitacion = ({ habitacionesExistentes }) => {
+const CrearHabitacion = ({ setHabitaciones }) => {
   const [numero, setNumero] = useState('');
   const [tipo, setTipo] = useState('Single');
   const [estado] = useState('Limpia + Libre');
   const [mensaje, setMensaje] = useState('');
-  const [habitaciones, setHabitaciones] = useState([]);
+  const [habitaciones, setHabitacionesLocales] = useState([]);
 
   useEffect(() => {
     const fetchHabitaciones = async () => {
       const data = await obtenerHabitaciones();
-      setHabitaciones(data);
+      setHabitacionesLocales(data);
     };
     fetchHabitaciones();
   }, []);
 
   const handleCrearHabitacion = async () => {
+    if (!numero) {
+      setMensaje('Por favor ingresa un número de habitación.');
+      setTimeout(() => setMensaje(''), 3000);
+      return;
+    }
+
     if (habitaciones.some(h => h.numeroID === numero)) {
       setMensaje('El número de habitación ya existe.');
       setTimeout(() => setMensaje(''), 3000);
@@ -28,10 +34,18 @@ const CrearHabitacion = ({ habitacionesExistentes }) => {
       tipo,
       estado,
     };
-    await crearHabitacion(habitacionData);
+
+    const nuevaHabitacion = await crearHabitacion(habitacionData);
+    if (nuevaHabitacion) {
+      setHabitacionesLocales((prev) => [...prev, nuevaHabitacion]);
+      setHabitaciones((prev) => [...prev, nuevaHabitacion]); // Actualizar el estado principal
+      setMensaje('Habitación creada con éxito.');
+    } else {
+      setMensaje('Error al crear la habitación.');
+    }
+    
     setNumero('');
     setTipo('Single');
-    setMensaje('Habitación creada con éxito.');
     setTimeout(() => setMensaje(''), 3000);
   };
 

@@ -4,8 +4,8 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import CrearHabitacion from "./CrearHabitacion";
 import CrearHuesped from "./CrearHuesped";
 import Navbar from "./Navbar";
-import { obtenerHabitaciones } from "../services/habitacionService";
-import { obtenerHuespedes } from "../services/huespedService";
+import { obtenerHabitaciones, crearHabitacion, actualizarHabitacion } from "../services/habitacionService";
+import { obtenerHuespedes, crearHuesped } from "../services/huespedService";
 import limpiaLibre from "../assets/limpia+libre.webp";
 import limpiaOcupada from "../assets/limpia+ocupada.webp";
 import suciaLibre from "../assets/sucia+libre.webp";
@@ -95,39 +95,73 @@ const HabitacionCard = ({ habitacion, index, onDropHuesped, setHabitaciones }) =
       </div>
     </div>
   );
-  
 };
 
 function Home({ usuario, nombreHotel, onLogout, vista = "todo", setVista }) {
   const [habitaciones, setHabitaciones] = useState([]);
   const [huespedes, setHuespedes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    const habs = await obtenerHabitaciones();
+    const huesps = await obtenerHuespedes();
+    setHabitaciones(habs);
+    setHuespedes(huesps);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const habs = await obtenerHabitaciones();
-      const huesps = await obtenerHuespedes();
-      setHabitaciones(habs);
-      setHuespedes(huesps);
-    };
     fetchData();
   }, []);
 
-  const onDropHuesped = (huesped, habitacionIndex) => {
+  const onDropHuesped = async (huesped, habitacionIndex) => {
+    const habitacion = habitaciones[habitacionIndex];
+
     if (huesped) {
-      setHuespedes((prev) => prev.filter((h) => h.nombre !== huesped.nombre));
-      setHabitaciones((prev) =>
-        prev.map((h, i) =>
-          i === habitacionIndex ? { ...h, estado: "Limpia + Ocupada", huesped } : h
-        )
-      );
+      if (!habitacion.huesped) {
+        const updatedHabitacion = { ...habitacion, estado: "Limpia + Ocupada", huesped };
+        await actualizarHabitacion(habitacion.id, updatedHabitacion);
+
+        setHabitaciones((prev) =>
+          prev.map((h, i) => (i === habitacionIndex ? updatedHabitacion : h))
+        );
+        setHuespedes((prev) => prev.filter((h) => h.id !== huesped.id));
+      }
     } else {
+      const updatedHabitacion = { ...habitacion, estado: "Limpia + Libre", huesped: null };
+      await actualizarHabitacion(habitacion.id, updatedHabitacion);
+
       setHabitaciones((prev) =>
-        prev.map((h, i) =>
-          i === habitacionIndex ? { ...h, estado: "Sucia + Libre", huesped: null } : h
-        )
+        prev.map((h, i) => (i === habitacionIndex ? updatedHabitacion : h))
       );
+
+      if (habitacion.huesped && !huespedes.some((h) => h.id === habitacion.huesped.id)) {
+        setHuespedes((prev) => [...prev, habitacion.huesped]);
+      }
     }
   };
+
+  const handleCrearHabitacion = async (nuevaHabitacion) => {
+    const habitacionConId = await crearHabitacion(nuevaHabitacion);
+    if (habitacionConId) {
+      setHabitaciones((prev) => [...prev, habitacionConId]); // Agrega directamente sin recargar
+    }
+  };
+
+  const handleCrearHuesped = async (nuevoHuesped) => {
+    const huespedConId = await crearHuesped(nuevoHuesped);
+    if (huespedConId) {
+      setHuespedes((prev) => [...prev, huespedConId]); // Agrega directamente sin recargar
+    }
+  };
+
+  const mostrarHuespedes = vista === "huespedes"
+    ? huespedes
+    : huespedes.filter((huesped) => !habitaciones.some((hab) => hab.huesped && hab.huesped.id === huesped.id));
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -135,8 +169,8 @@ function Home({ usuario, nombreHotel, onLogout, vista = "todo", setVista }) {
       <div className="home-container">
         {vista === "todo" && (
           <div className="sidebar-container">
-            <CrearHabitacion setHabitaciones={setHabitaciones} />
-            <CrearHuesped setHuespedes={setHuespedes} />
+            <CrearHabitacion setHabitaciones={handleCrearHabitacion} />
+            <CrearHuesped setHuespedes={handleCrearHuesped} />
           </div>
         )}
         {(vista === "todo" || vista === "habitaciones") && (
@@ -144,7 +178,7 @@ function Home({ usuario, nombreHotel, onLogout, vista = "todo", setVista }) {
             <h2>Habitaciones</h2>
             {habitaciones.map((habitacion, index) => (
               <HabitacionCard
-                key={index}
+                key={habitacion.id}
                 habitacion={habitacion}
                 index={index}
                 onDropHuesped={onDropHuesped}
@@ -156,8 +190,8 @@ function Home({ usuario, nombreHotel, onLogout, vista = "todo", setVista }) {
         {(vista === "todo" || vista === "huespedes") && (
           <div className="huespedes-container">
             <h2>Huéspedes</h2>
-            {huespedes.map((huesped, index) => (
-              <HuespedCard key={index} huesped={huesped} />
+            {mostrarHuespedes.map((huesped) => (
+              <HuespedCard key={huesped.id} huesped={huesped} />
             ))}
           </div>
         )}
